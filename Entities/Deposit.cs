@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace MiniBank.Entities
 {
+    [ValidatorAttribute(typeof(Validators.DepositValidator))]
     public class Deposit: IDatabaseEntity
     {
         public long Id { get; set; }
@@ -16,9 +17,6 @@ namespace MiniBank.Entities
         {
             if (account == null)
                 throw new ArgumentNullException(nameof(account), "Account cannot be null.");
-
-            if (amount <= 0)
-                throw new ArgumentOutOfRangeException(nameof(amount), "Deposit amount must be greater than zero.");
 
             AccountId = account.Id;
             Amount = amount;

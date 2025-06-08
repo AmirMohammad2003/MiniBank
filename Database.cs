@@ -34,7 +34,7 @@ namespace MiniBank
             Type type = typeof(TDatabaseEntity);
             if (!type.IsDefined(typeof(ValidatorAttribute), false))
             {
-                return true; 
+                return true;
             }
 
             ValidatorAttribute[] attributes = (ValidatorAttribute[])type.GetCustomAttributes(typeof(ValidatorAttribute), false);
@@ -82,11 +82,11 @@ namespace MiniBank
             IEnumerable<IDatabaseEntity> res = GetList(typeof(TDatabaseEntity)).Where(entity => entity.Id == id);
             if (res.Count() > 1) throw new InvalidOperationException("More than one entity with the same ID found.");
             IDatabaseEntity? fetched = res.FirstOrDefault();
-            if(fetched == null)
+            if (fetched == null)
             {
                 return default;
             }
-            return (TDatabaseEntity) fetched;
+            return (TDatabaseEntity)fetched;
         }
 
 
@@ -108,8 +108,8 @@ namespace MiniBank
             }
             else if (Get<TDatabaseEntity>(entity.Id) != null)
             {
-                throw new InvalidOperationException("Entity with the same ID already exists.");
-            } 
+                throw new InvalidOperationException($"Entity with the same ID already exists.");
+            }
             else
             {
                 _nextId[type] = Math.Max(_nextId[type], entity.Id);
@@ -139,7 +139,7 @@ namespace MiniBank
             OnEntityDeleted?.Invoke(entity);
         }
 
-        IEnumerable<TDatabaseEntity> FetchAll<TDatabaseEntity>() where TDatabaseEntity : IDatabaseEntity
+        public IEnumerable<TDatabaseEntity> FetchAll<TDatabaseEntity>() where TDatabaseEntity : IDatabaseEntity
         {
             return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>().ToList();
         }
@@ -147,6 +147,16 @@ namespace MiniBank
         public bool Exists<TDatabaseEntity>(Func<TDatabaseEntity?, bool> evaluate) where TDatabaseEntity : IDatabaseEntity
         {
             return GetList(typeof(TDatabaseEntity)).Any(entity => evaluate((TDatabaseEntity)entity));
+        }
+
+        public IEnumerable<TDatabaseEntity> Filter<TDatabaseEntity>(Func<TDatabaseEntity, bool> predicate) where TDatabaseEntity : IDatabaseEntity
+        {
+            return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>().Where(predicate);
+        }
+
+        public T Reduce<TDatabaseEntity, T>(Func<TDatabaseEntity, T> selector, Func<T, T, T> reducer, T initialValue) where TDatabaseEntity : IDatabaseEntity
+        {
+            return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>().Select(selector).Aggregate(initialValue, reducer);
         }
     }
 }
