@@ -10,18 +10,29 @@ namespace MiniBank.Entities
     public class Account: IDatabaseEntity
     {
         public long Id { get; set; }
-        public string AccountNumber { get; set; } = string.Empty;
+        public long AccountNumber { get; set; }
         public decimal Balance { get; set; } = 0.0m;
         public bool IsActive { get; set; } = true;
-        public Card AccountCard { get; set; } = new Card();
+        public long CardId { get; set; }
+        public long UserId { get; set; }
 
-        public class Card
+        public Account(User user, long cardId)
         {
-            public string CardNumber { get; set; } = string.Empty;
-            public int Cvv2 { get; set; } = 0;
-            public int Passcode { get; set; } = 0;
-            public int Passcode2 { get; set; } = 0;
-            public DateTime ExpiryDate { get; set; } = DateTime.UtcNow.AddYears(5);
+            CardId = cardId;
+            AccountNumber = GenerateAccountNumber();
+            UserId = user.Id;
+        }
+
+        private static long GenerateAccountNumber()
+        {
+            Random random = new();
+            long accountNumber;
+            do
+            {
+                accountNumber = random.Next(100000000, 999999999);
+            } while (Database.Instance.Exists<Account>(a => a?.AccountNumber == accountNumber));
+            
+            return accountNumber;
         }
     
     }

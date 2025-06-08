@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace MiniBank.Entities
 {
+    [ValidatorAttribute(typeof(Validators.UserValidator))]
     public class User: IDatabaseEntity
     {
         public long Id { get; set; }

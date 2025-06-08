@@ -21,7 +21,7 @@ namespace MiniBank
 
         private readonly Dictionary<Type, List<IDatabaseEntity>> _dataStore;
 
-        private long _nextId = 1;
+        private readonly Dictionary<Type, long> _nextId;
 
         public event Action<IDatabaseEntity>? OnEntitySaved;
 
@@ -74,9 +74,10 @@ namespace MiniBank
         public Database()
         {
             _dataStore = [];
+            _nextId = [];
         }
 
-        TDatabaseEntity? Get<TDatabaseEntity>(long id) where TDatabaseEntity : IDatabaseEntity
+        public TDatabaseEntity? Get<TDatabaseEntity>(long id) where TDatabaseEntity : IDatabaseEntity
         {
             IEnumerable<IDatabaseEntity> res = GetList(typeof(TDatabaseEntity)).Where(entity => entity.Id == id);
             if (res.Count() > 1) throw new InvalidOperationException("More than one entity with the same ID found.");
@@ -89,11 +90,17 @@ namespace MiniBank
         }
 
 
-        void Save<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Save<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
         {
+            Type type = typeof(TDatabaseEntity);
+            if (!_nextId.ContainsKey(type))
+            {
+                _nextId[type] = 0L;
+            }
+
             if (entity.Id == 0L)
             {
-                entity.Id = _nextId++;
+                entity.Id = ++_nextId[type];
             }
             else if (entity.Id < 0L)
             {
@@ -105,14 +112,15 @@ namespace MiniBank
             } 
             else
             {
-                _nextId = Math.Max(_nextId, entity.Id + 1);
+                _nextId[type] = Math.Max(_nextId[type], entity.Id);
             }
+
             Validate(entity, true);
             GetList(typeof(TDatabaseEntity)).Add(entity);
             OnEntitySaved?.Invoke(entity);
         }
 
-        void Update<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Update<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
         {
             TDatabaseEntity? old_entity = Get<TDatabaseEntity>(entity.Id);
             if (entity == null)
@@ -125,7 +133,7 @@ namespace MiniBank
             OnEntityUpdated?.Invoke(entity);
         }
 
-        void Delete<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Delete<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
         {
             GetList(typeof(TDatabaseEntity)).Remove(entity);
             OnEntityDeleted?.Invoke(entity);
@@ -134,6 +142,11 @@ namespace MiniBank
         IEnumerable<TDatabaseEntity> FetchAll<TDatabaseEntity>() where TDatabaseEntity : IDatabaseEntity
         {
             return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>().ToList();
+        }
+
+        public bool Exists<TDatabaseEntity>(Func<TDatabaseEntity?, bool> evaluate) where TDatabaseEntity : IDatabaseEntity
+        {
+            return GetList(typeof(TDatabaseEntity)).Any(entity => evaluate((TDatabaseEntity)entity));
         }
     }
 }
