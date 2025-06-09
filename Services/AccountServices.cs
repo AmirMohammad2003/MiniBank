@@ -29,7 +29,7 @@ namespace MiniBank.Services
 
         public static void CreateAccount(string UserName, string Password, string FirstName, string LastName, string NationalCode, string PhoneNumber, decimal initialDepositAmount)
         {
-            if (initialDepositAmount <= 0)
+            if (initialDepositAmount <= 100)
             {
                 throw new ArgumentException("Initial deposit amount must be greater than zero.", nameof(initialDepositAmount));
             }
@@ -61,7 +61,7 @@ namespace MiniBank.Services
 
         public static decimal AccountBalance(long accountId)
         {
-            var account = Database.Instance.Filter<Account>(a => a.Id == accountId).FirstOrDefault() ?? throw new ArgumentException("Account not found.", nameof(accountId));
+            var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             return account.Balance;
         }
 
@@ -72,7 +72,7 @@ namespace MiniBank.Services
                 throw new ArgumentException("Deposit amount must be greater than zero.", nameof(amount));
             }
 
-            var account = Database.Instance.Filter<Account>(a => a.Id == accountId).FirstOrDefault() ?? throw new ArgumentException("Account not found.", nameof(accountId));
+            var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             var deposit = new Deposit(account, amount);
             account.Balance += deposit.Amount;
 
@@ -89,39 +89,47 @@ namespace MiniBank.Services
                 throw new ArgumentException("Withdrawal amount must be greater than zero.", nameof(amount));
             }
 
-            var account = Database.Instance.Filter<Account>(a => a.Id == accountId).FirstOrDefault() ?? throw new ArgumentException("Account not found.", nameof(accountId));
+            var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             if (account.Balance < amount)
             {
                 throw new InvalidOperationException("Insufficient funds for withdrawal.");
             }
 
             account.Balance -= amount;
-            Database.Instance.Save(account);
+            Database.Instance.Update(account);
             string logMessage = $"Withdrawal of {amount} from account {accountId} successful. New balance: {account.Balance}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
         }
 
         public static List<Transaction> GetTransactions(long accountId)
         {
-            var account = Database.Instance.Filter<Account>(a => a.Id == accountId).FirstOrDefault() ?? throw new ArgumentException("Account not found.", nameof(accountId));
+            var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             return Database.Instance.Filter<Transaction>(t => t.FromAccountId == account.Id || t.ToAccountId == account.Id).ToList();
+        }
+
+        private static void SendPasscode(long accountId, long recivingAccountId, decimal amount)
+        {
+
+            int passcode = new Random().Next(100000, 999999);
+            KeyValue kv = new($"{accountId}:{recivingAccountId}:{amount}", passcode.ToString());
+            Database.Instance.Save(kv);
+            string logMessage = $"Randomly generated passcode: {passcode}";
+            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+
         }
 
         public static bool CheckPayment(long accountId, long recivingAccountId, decimal amount)
         {
-            var account = Database.Instance.Filter<Account>(a => a.Id == accountId).FirstOrDefault();
-            var recivingAccount = Database.Instance.Filter<Account>(a => a.Id == recivingAccountId).FirstOrDefault();
+            var account = Database.Instance.Get<Account>(accountId);
+            var recivingAccount = Database.Instance.Get<Account>(recivingAccountId);
             if (account == null || recivingAccount == null || account.Balance < amount)
             {
                 return false;
             }
 
-            if (amount > 100) {
-                int passcode = new Random().Next(100000, 999999);
-                KeyValue kv = new($"{accountId}:{recivingAccountId}:{amount}", passcode.ToString());
-                Database.Instance.Save(kv);
-                string logMessage = $"Randomly generated passcode: {passcode}";
-                File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+            if (amount > 100)
+            {
+                SendPasscode(accountId, recivingAccountId, amount);
             }
 
             return true;
@@ -129,16 +137,13 @@ namespace MiniBank.Services
 
         public static bool ContinuePayment(long accountId, long recivingAccountId, decimal amount, int userEnteredPasscode)
         {
-            var account = Database.Instance.Filter<Account>(a => {
-                Console.WriteLine(a.Id + " " + accountId + " " + a.Id.Equals(accountId));
-                return a.Id == accountId;
-                }).FirstOrDefault();
-            var recivingAccount = Database.Instance.Filter<Account>(a => a.Id == recivingAccountId).FirstOrDefault();
-            if (account == null || recivingAccount == null || account.Balance < amount)
+            var account = Database.Instance.Get<Account>(accountId);
+            var recivingAccount = Database.Instance.Get<Account>(recivingAccountId);
+            if (account.Balance < amount)
             {
                 return false;
             }
-            var card = Database.Instance.Filter<DebitCard>(c => c.Id == account.CardId).FirstOrDefault();
+            var card = Database.Instance.Get<DebitCard>(account.CardId);
             if (card == null)
             { // this can't be
                 return false;
@@ -156,6 +161,14 @@ namespace MiniBank.Services
                 passcode = Convert.ToInt32(kv.Value);
             }
 
+            string logMessage;
+            if (passcode != userEnteredPasscode)
+            {
+                logMessage = $"Payment failed for account {accountId} to {recivingAccountId}. Incorrect passcode entered: {userEnteredPasscode} (expected: {passcode})";
+                File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+                return false;
+            }
+
             account.Balance -= amount;
             recivingAccount.Balance += amount;
 
@@ -170,10 +183,9 @@ namespace MiniBank.Services
             Database.Instance.Save(transaction);
             Database.Instance.Update(account);
             Database.Instance.Update(recivingAccount);
-            string logMessage = $"Payment of {amount} from account {accountId} to {recivingAccountId} successful. New balance: {account.Balance}";
+            logMessage = $"Payment of {amount} from account {accountId} to {recivingAccountId} successful. New balance: {account.Balance}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
             return true;
-
         }
 
     }
