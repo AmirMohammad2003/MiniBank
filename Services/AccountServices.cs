@@ -6,13 +6,13 @@ namespace MiniBank.Services
     {
         public static event Action<User>? OnSignIn;
 
-        public static string SignIn(string UserName, string Password)
+        public static long SignIn(string UserName, string Password)
         {
             var user = Database.Instance.Filter<User>(u => u.UserName == UserName.Trim() && u.Password == Password.Trim()).FirstOrDefault();
             if (user != null)
             {
                 OnSignIn?.Invoke(user);
-                return user.Id.ToString(); // Wow WoW woW.
+                return user.Id; // Wow WoW woW.
             }
             else
             {
