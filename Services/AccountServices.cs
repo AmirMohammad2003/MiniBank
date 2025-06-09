@@ -76,7 +76,7 @@ namespace MiniBank.Services
             Database.Instance.Save(deposit);
             Database.Instance.Update(account);
             string logMessage = $"Deposit of {amount} from account {accountId} successful. New balance: {account.Balance}";
-            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}\n");
         }
 
         public static void Withdraw(long accountId, decimal amount)
@@ -95,7 +95,7 @@ namespace MiniBank.Services
             account.Withdraw(amount);
             Database.Instance.Update(account);
             string logMessage = $"Withdrawal of {amount} from account {accountId} successful. New balance: {account.Balance}";
-            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}\n");
         }
 
         public static List<Transaction> GetTransactions(long accountId)
@@ -111,7 +111,7 @@ namespace MiniBank.Services
             PassCode code = new(passcode.ToString(), accountId, recivingAccountId, amount);
             Database.Instance.Save(code);
             string logMessage = $"Randomly generated passcode: {passcode}";
-            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}\n");
 
         }
 
@@ -197,7 +197,7 @@ namespace MiniBank.Services
             Database.Instance.Update(account);
             Database.Instance.Update(recivingAccount);
             string logMessage = $"Payment of {amount} from account {accountId} to {recivingAccountId} successful. New balance: {account.Balance}";
-            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
+            File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}\n");
             return true;
         }
 
