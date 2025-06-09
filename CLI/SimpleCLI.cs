@@ -210,6 +210,9 @@ namespace MiniBank.CLI
                     case "quit":
                         Environment.Exit(0);
                         break;
+                    case "help": 
+                        Console.WriteLine("commands: quit, help, signin, createAccount");
+                        break;
                     case "signin":
                         PrintAccounts();
                         long userId = SignIn();
