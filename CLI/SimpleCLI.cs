@@ -100,18 +100,18 @@ namespace MiniBank.CLI
             }
         }
 
-        static void HandleInput(string input, Entities.User user)
+        static bool HandleInput(string input, Entities.User user)
         {
-            if (string.IsNullOrWhiteSpace(input)) return;
+            if (string.IsNullOrWhiteSpace(input)) return false;
 
             var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0) return;
+            if (parts.Length == 0) return false;
 
             var account = Database.Instance.Filter<Entities.Account>(acc => acc.UserId == user.Id).FirstOrDefault();
             if (account == null)
             {
                 Console.WriteLine("No account found for the user.");
-                return;
+                return false;
             }
 
             string command = parts[0].ToLowerInvariant();
@@ -127,6 +127,10 @@ namespace MiniBank.CLI
                     {
                         Console.WriteLine(ex.Message);
                     }
+                    break;
+
+                case "logout":
+                    return true;
                     break;
 
                 case "deposit":
@@ -194,6 +198,7 @@ namespace MiniBank.CLI
                     Console.WriteLine("Unknown command.");
                     break;
             }
+            return false;
         }
 
 
@@ -227,10 +232,14 @@ namespace MiniBank.CLI
                         {
                             Console.Write(prompt);
                             input = Console.ReadLine();
-                            HandleInput(input, user);
+                            if (HandleInput(input, user))
+                            {
+                                break;
+                            }
                         } while (true);
                         break;
                     case "createaccount":
+                        // Meh
                         Console.Write("Username: ");
                         string username = Console.ReadLine();
                         Console.Write("Password: ");
