@@ -8,7 +8,7 @@ namespace MiniBank.Services
 
         public static long SignIn(string UserName, string Password)
         {
-            var user = Database.Instance.Filter<User>(u => u.UserName == UserName.Trim() && u.Password == Password.Trim()).FirstOrDefault();
+            var user = Database.Instance.Filter<User>(u => u.UserName == UserName?.Trim() && u.Password == Password?.Trim()).FirstOrDefault();
             if (user != null)
             {
                 OnSignIn?.Invoke(user);
@@ -149,7 +149,7 @@ namespace MiniBank.Services
             if (amount > 100)
             {
                 var codes = Database.Instance.Filter<PassCode>(c => c.AccountId == accountId && c.RecivingAccountId == recivingAccountId && c.Amount == amount);
-                List<PassCode> toDelete = new();
+                List<PassCode> toDelete = [];
                 foreach (var codeInCheck in codes)
                 {
                     if (codeInCheck.IsValid())
