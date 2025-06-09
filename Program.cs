@@ -41,11 +41,12 @@ namespace MiniBank
                 "09223456789",
                 1000.00m
             );
+
             Database.Instance.FetchAll<Account>().ToList().ForEach(account =>
             {
                 Console.WriteLine($"Account ID: {account.Id}, Account Number: {account.AccountNumber}, Balance: {account.Balance}");
             });
-            
+
             var userId = Services.AccountServices.SignIn("heshmat_sr", "securepassword");
             if (Services.AccountServices.CheckPayment(1, 2, 101.00m))
             {
@@ -57,6 +58,10 @@ namespace MiniBank
 
                 }
             }
+
+            Services.AccountServices.Deposit(1, 100m);
+            Services.AccountServices.Withdraw(1, 100m);
+
             Database.Instance.OnEntitySaved -= notifyEntity;
             Database.Instance.OnEntityUpdated -= notifyEntity;
             Services.AccountServices.OnSignIn -= notifySignin;
