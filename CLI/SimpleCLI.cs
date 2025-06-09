@@ -57,9 +57,7 @@ namespace MiniBank.CLI
             if (sendingToCard)
             {
                 var card = Database.Instance.Filter<Entities.DebitCard>(a => a.CardNumber.Trim().Equals(parts[1]?.Trim())).FirstOrDefault();
-                Console.WriteLine(card.Id);
                 recivingAccount = Database.Instance.Get<Entities.Account>((long)card.AccountId);
-                Console.WriteLine(recivingAccount);
             }
             else
             {
@@ -109,7 +107,7 @@ namespace MiniBank.CLI
             var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0) return;
 
-            var account = Database.Instance.Get<Entities.Account>(user.Id);
+            var account = Database.Instance.Filter<Entities.Account>(acc => acc.UserId == user.Id).FirstOrDefault();
             if (account == null)
             {
                 Console.WriteLine("No account found for the user.");
@@ -203,20 +201,62 @@ namespace MiniBank.CLI
         static void Main()
         {
             Setup();
-            PrintAccounts();
-            long userId = SignIn();
-            if (userId == -1) 
-            {
-                Console.WriteLine("Invalid username or password.");
-                return;
-            }
-            var user = Database.Instance.Get<User>(userId);
-            string prompt = $"{user?.FirstName} {user?.LastName} ({user?.UserName}) > ";
             do
             {
-                Console.Write(prompt);
+                Console.Write("> ");
                 string input = Console.ReadLine();
-                HandleInput(input, user);
+                switch (input)
+                {
+                    case "quit":
+                        Environment.Exit(0);
+                        break;
+                    case "signin":
+                        PrintAccounts();
+                        long userId = SignIn();
+                        if (userId == -1)
+                        {
+                            Console.WriteLine("Invalid username or password.");
+                            return;
+                        }
+                        var user = Database.Instance.Get<User>(userId);
+                        string prompt = $"{user?.FirstName} {user?.LastName} ({user?.UserName}) > ";
+                        do
+                        {
+                            Console.Write(prompt);
+                            input = Console.ReadLine();
+                            HandleInput(input, user);
+                        } while (true);
+                        break;
+                    case "createaccount":
+                        Console.Write("Username: ");
+                        string username = Console.ReadLine();
+                        Console.Write("Password: ");
+                        string password = Console.ReadLine();
+                        Console.Write("First Name: ");
+                        string firstName = Console.ReadLine();
+                        Console.Write("Last Name: ");
+                        string lastName = Console.ReadLine();
+                        Console.Write("National Code: ");
+                        string nationalCode = Console.ReadLine();
+                        Console.Write("Phone Number: ");
+                        string phoneNumber = Console.ReadLine();
+                        Console.Write("Initial Deposit Amount: ");
+                        decimal initialDepositAmount;
+                        while (!decimal.TryParse(Console.ReadLine(), out initialDepositAmount) || initialDepositAmount <= 0)
+                        {
+                            Console.Write("Please enter a valid initial deposit amount: ");
+                        }
+                        try
+                        {
+                            Services.AccountServices.CreateAccount(username, password, firstName, lastName, nationalCode, phoneNumber, initialDepositAmount);
+                            Console.WriteLine("Account created successfully.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error creating account: {ex.Message}");
+                        }
+                        break;
+                }
             } while (true);
         }
 
