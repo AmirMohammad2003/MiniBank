@@ -10,6 +10,8 @@ namespace MiniBank.Entities
         public DateTime CreatedAt { get; init; }
         private DateTime ExpiresAt;
 
+        private const int ExpirationTime = 1;
+
         public PassCode(string code, long accountId, long recivingAccountId, decimal amount)
         {
             AccountId = accountId;
@@ -17,7 +19,7 @@ namespace MiniBank.Entities
             Amount = amount;
             Code = code;
             CreatedAt = DateTime.UtcNow;
-            ExpiresAt = CreatedAt.AddMinutes(1);
+            ExpiresAt = CreatedAt.AddMinutes(ExpirationTime);
         }
 
         public bool IsValid()
