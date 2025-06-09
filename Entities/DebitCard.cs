@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MiniBank.Entities
+﻿namespace MiniBank.Entities
 {
-    public class DebitCard: IDatabaseEntity
+    public class DebitCard : IDatabaseEntity
     {
         public long Id { get; set; }
         public string CardNumber { get; set; } = string.Empty;

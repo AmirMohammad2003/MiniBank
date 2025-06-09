@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MiniBank
+﻿namespace MiniBank
 {
     internal class Database
     {
@@ -89,8 +82,7 @@ namespace MiniBank
             return (TDatabaseEntity)fetched;
         }
 
-
-        public void Save<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Save<TDatabaseEntity>(TDatabaseEntity entity, bool signal = true) where TDatabaseEntity : IDatabaseEntity
         {
             Type type = typeof(TDatabaseEntity);
             if (!_nextId.ContainsKey(type))
@@ -117,10 +109,13 @@ namespace MiniBank
 
             Validate(entity, true);
             GetList(typeof(TDatabaseEntity)).Add(entity);
-            OnEntitySaved?.Invoke(entity);
+            if (signal)
+            {
+                OnEntitySaved?.Invoke(entity);
+            }
         }
 
-        public void Update<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Update<TDatabaseEntity>(TDatabaseEntity entity, bool signal = true) where TDatabaseEntity : IDatabaseEntity
         {
             TDatabaseEntity? old_entity = Get<TDatabaseEntity>(entity.Id);
             if (entity == null)
@@ -128,20 +123,26 @@ namespace MiniBank
                 throw new InvalidOperationException("Entity not found for update.");
             }
             Validate(entity, true);
-            Delete(old_entity!);
-            Save(entity);
-            OnEntityUpdated?.Invoke(entity);
+            Delete(old_entity!, false);
+            Save(entity, false);
+            if (signal)
+            {
+                OnEntityUpdated?.Invoke(entity);
+            }
         }
 
-        public void Delete<TDatabaseEntity>(TDatabaseEntity entity) where TDatabaseEntity : IDatabaseEntity
+        public void Delete<TDatabaseEntity>(TDatabaseEntity entity, bool signal = true) where TDatabaseEntity : IDatabaseEntity
         {
             GetList(typeof(TDatabaseEntity)).Remove(entity);
-            OnEntityDeleted?.Invoke(entity);
+            if (signal)
+            {
+                OnEntityDeleted?.Invoke(entity);
+            }
         }
 
         public IEnumerable<TDatabaseEntity> FetchAll<TDatabaseEntity>() where TDatabaseEntity : IDatabaseEntity
         {
-            return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>().ToList();
+            return GetList(typeof(TDatabaseEntity)).Cast<TDatabaseEntity>();
         }
 
         public bool Exists<TDatabaseEntity>(Func<TDatabaseEntity?, bool> evaluate) where TDatabaseEntity : IDatabaseEntity

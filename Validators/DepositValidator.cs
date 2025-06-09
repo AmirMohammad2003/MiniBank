@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MiniBank.Validators
+﻿namespace MiniBank.Validators
 {
-    public class DepositValidator :  IValidator<Entities.Deposit>
+    public class DepositValidator : IValidator<Entities.Deposit>
     {
         public void Validate(Entities.Deposit entity)
         {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using MiniBank.Entities;
+﻿using MiniBank.Entities;
 
 namespace MiniBank.Services
 {
@@ -54,7 +48,7 @@ namespace MiniBank.Services
             Deposit initialDeposit = new(account, initialDepositAmount);
             Database.Instance.Save(initialDeposit);
 
-            account.Balance += initialDeposit.Amount;
+            account.Deposit(initialDeposit.Amount);
             Database.Instance.Update(account);
 
         }
@@ -74,7 +68,8 @@ namespace MiniBank.Services
 
             var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             var deposit = new Deposit(account, amount);
-            account.Balance += deposit.Amount;
+            account.Deposit(amount);
+            Console.WriteLine("Deposit");
 
             Database.Instance.Save(deposit);
             Database.Instance.Update(account);
@@ -95,7 +90,8 @@ namespace MiniBank.Services
                 throw new InvalidOperationException("Insufficient funds for withdrawal.");
             }
 
-            account.Balance -= amount;
+            account.Withdraw(amount);
+            Console.WriteLine("Withdraw");
             Database.Instance.Update(account);
             string logMessage = $"Withdrawal of {amount} from account {accountId} successful. New balance: {account.Balance}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
@@ -139,7 +135,7 @@ namespace MiniBank.Services
         {
             var account = Database.Instance.Get<Account>(accountId);
             var recivingAccount = Database.Instance.Get<Account>(recivingAccountId);
-            if (account.Balance < amount)
+            if (account!.Balance < amount)
             {
                 return false;
             }
@@ -169,8 +165,8 @@ namespace MiniBank.Services
                 return false;
             }
 
-            account.Balance -= amount;
-            recivingAccount.Balance += amount;
+            account.Withdraw(amount);
+            recivingAccount!.Deposit(amount);
 
             Transaction transaction = new()
             {

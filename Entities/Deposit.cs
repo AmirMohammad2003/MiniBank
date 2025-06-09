@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MiniBank.Entities
+﻿namespace MiniBank.Entities
 {
     [ValidatorAttribute(typeof(Validators.DepositValidator))]
-    public class Deposit: IDatabaseEntity
+    public class Deposit : IDatabaseEntity
     {
         public long Id { get; set; }
         public long AccountId { get; set; }

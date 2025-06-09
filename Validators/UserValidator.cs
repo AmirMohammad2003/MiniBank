@@ -1,9 +1,4 @@
 ﻿using MiniBank.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MiniBank.Validators
 {
@@ -60,7 +55,8 @@ namespace MiniBank.Validators
                 (User.UserName == entity.UserName || User.NationalCode == entity.NationalCode) &&
                 User.Id != entity.Id);
 
-            if (checkUniqueness) { 
+            if (checkUniqueness)
+            {
                 throw new ValidationError("UserName or NationalCode already exists.");
             }
         }
