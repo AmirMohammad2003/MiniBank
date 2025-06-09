@@ -1,5 +1,6 @@
 ﻿namespace MiniBank.Entities
 {
+    [ValidatorAttribute(typeof(Validators.DebitCardValidator))]
     public class DebitCard : IDatabaseEntity
     {
         public long Id { get; set; }
