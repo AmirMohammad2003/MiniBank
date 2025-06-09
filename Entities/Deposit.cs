@@ -4,8 +4,8 @@
     public class Deposit : IDatabaseEntity
     {
         public long Id { get; set; }
-        public long AccountId { get; set; }
-        public decimal Amount { get; set; } = 0.0m;
+        public long AccountId { get; init; }
+        public decimal Amount { get; init; }
 
         public Deposit(Account account, decimal amount)
         {

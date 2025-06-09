@@ -3,11 +3,12 @@
     public class DebitCard : IDatabaseEntity
     {
         public long Id { get; set; }
-        public string CardNumber { get; set; } = string.Empty;
-        public int Cvv2 { get; set; } = 0;
-        public int Passcode { get; set; } = 0;
-        public int Passcode2 { get; set; } = 0;
-        public DateTime ExpiryDate { get; set; } = DateTime.UtcNow.AddYears(5);
+        public string CardNumber { get; init; }
+        public int Cvv2 { get; init; }
+        public DateTime ExpiryDate { get; init; } = DateTime.UtcNow.AddYears(5);
+
+        public int Passcode { get; set; }
+        public int Passcode2 { get; set; }
 
         public DebitCard()
         {

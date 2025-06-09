@@ -9,7 +9,7 @@
 
         public bool IsActive { get; set; }
 
-        private decimal _balance { get; set; }
+        private decimal _balance;
 
         public decimal Balance
         {

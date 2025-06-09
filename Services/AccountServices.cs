@@ -69,7 +69,6 @@ namespace MiniBank.Services
             var account = Database.Instance.Get<Account>(accountId) ?? throw new ArgumentException("Account not found.", nameof(accountId));
             var deposit = new Deposit(account, amount);
             account.Deposit(amount);
-            Console.WriteLine("Deposit");
 
             Database.Instance.Save(deposit);
             Database.Instance.Update(account);
@@ -91,7 +90,6 @@ namespace MiniBank.Services
             }
 
             account.Withdraw(amount);
-            Console.WriteLine("Withdraw");
             Database.Instance.Update(account);
             string logMessage = $"Withdrawal of {amount} from account {accountId} successful. New balance: {account.Balance}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
@@ -107,8 +105,8 @@ namespace MiniBank.Services
         {
 
             int passcode = new Random().Next(100000, 999999);
-            KeyValue kv = new($"{accountId}:{recivingAccountId}:{amount}", passcode.ToString());
-            Database.Instance.Save(kv);
+            PassCode code = new(passcode.ToString(), accountId, recivingAccountId, amount);
+            Database.Instance.Save(code);
             string logMessage = $"Randomly generated passcode: {passcode}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
 
@@ -147,23 +145,37 @@ namespace MiniBank.Services
 
             int passcode = card.Passcode2;
 
+            PassCode? code = null;
             if (amount > 100)
             {
-                KeyValue? kv = Database.Instance.Filter<KeyValue>(k => k.Key == $"{accountId}:{recivingAccountId}:{amount}").FirstOrDefault();
-                if (kv == null)
+                var codes = Database.Instance.Filter<PassCode>(c => c.AccountId == accountId && c.RecivingAccountId == recivingAccountId && c.Amount == amount);
+                List<PassCode> toDelete = new();
+                foreach (var codeInCheck in codes)
                 {
-                    return false;
+                    if (codeInCheck.IsValid())
+                    {
+                        code = codeInCheck;
+                        // break;
+                    }
+                    else
+                    {
+                        toDelete.Add(codeInCheck);
+                    }
                 }
-                passcode = Convert.ToInt32(kv.Value);
+                toDelete.ForEach(c => Database.Instance.Delete(c));
+
+                if (code == null)
+                {
+                    return false; // No valid passcode found
+                }
+                passcode = Convert.ToInt32(code.Code);
             }
 
-            string logMessage;
             if (passcode != userEnteredPasscode)
             {
-                logMessage = $"Payment failed for account {accountId} to {recivingAccountId}. Incorrect passcode entered: {userEnteredPasscode} (expected: {passcode})";
-                File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
                 return false;
             }
+            Database.Instance.Delete(code!);
 
             account.Withdraw(amount);
             recivingAccount!.Deposit(amount);
@@ -179,7 +191,7 @@ namespace MiniBank.Services
             Database.Instance.Save(transaction);
             Database.Instance.Update(account);
             Database.Instance.Update(recivingAccount);
-            logMessage = $"Payment of {amount} from account {accountId} to {recivingAccountId} successful. New balance: {account.Balance}";
+            string logMessage = $"Payment of {amount} from account {accountId} to {recivingAccountId} successful. New balance: {account.Balance}";
             File.AppendAllText("log.txt", $"{DateTime.Now}: {logMessage}");
             return true;
         }
