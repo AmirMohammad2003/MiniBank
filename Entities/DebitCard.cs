@@ -8,6 +8,19 @@
         public int Cvv2 { get; init; }
         public DateTime ExpiryDate { get; init; } = DateTime.UtcNow.AddYears(5);
 
+        private long? _accountId;
+        public long? AccountId {
+            get => _accountId;
+            set
+            {
+                if (_accountId >= 0)
+                {
+                    return;
+                }
+                _accountId = value;
+            } 
+        }
+
         public int Passcode { get; set; }
         public int Passcode2 { get; set; }
 

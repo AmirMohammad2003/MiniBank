@@ -45,6 +45,9 @@ namespace MiniBank.Services
             Account account = new(user, card.Id);
             Database.Instance.Save(account);
 
+            card.AccountId = account.Id;
+            Database.Instance.Update(card);
+
             Deposit initialDeposit = new(account, initialDepositAmount);
             Database.Instance.Save(initialDeposit);
 
@@ -148,7 +151,9 @@ namespace MiniBank.Services
             PassCode? code = null;
             if (amount > 100)
             {
-                var codes = Database.Instance.Filter<PassCode>(c => c.AccountId == accountId && c.RecivingAccountId == recivingAccountId && c.Amount == amount);
+                var codes = Database.Instance.Filter<PassCode>(c => {
+                    return c.AccountId == accountId && c.RecivingAccountId == recivingAccountId && c.Amount == amount;
+                });
                 List<PassCode> toDelete = [];
                 foreach (var codeInCheck in codes)
                 {
